@@ -34,6 +34,12 @@ module.exports = ({ strapi }) => ({
 
     // Adds to DB
     let parsedScore = verification.score || -1
+    // Regular expressions 
+    const nameRegex = /^([A-Za-z]{2,}\s)*[A-Za-z]{2,}$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im;
+    const messageRegex = /^[a-zA-Z]+\b([\w\s'’".,?!-;])*$/;
+
     try {
       await strapi.query('plugin::ezforms.submission').create({
         data: {
@@ -47,8 +53,23 @@ module.exports = ({ strapi }) => ({
       strapi.log.error(e)
       return ctx.internalServerError('A Whoopsie Happened')
     }
+    // Validations
+    const data = ctx.request.body.formData
 
-    return ctx.body = ctx.request.body.formData
+    if (!nameRegex.test(data.name)) {
+      return ctx.badRequest('Invalid or incomplete name');
+    }
+    if (!emailRegex.test(data.email)) {
+      return ctx.badRequest('Invalid email');
+    }
+    if (!phoneRegex.test(data.phone)) {
+      return ctx.badRequest('Invalid phone');
+    }
+    if (!messageRegex.test(data.message)) {
+      return ctx.badRequest('Invalid message');
+    }
+
+    return ctx.body = 'form submitted succesfully'
   },
 })
 
